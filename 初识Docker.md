@@ -1,4 +1,29 @@
-# docker镜像
+# docker概念
+初学docker 我就想知道他到底能做什么用，了解到了这个工具如下几个优点。
+## docker的镜像，仓库和容器
+dockerhub上面有一个非常强大的镜像库，就像github一样，一行命令就可以拉取（mysql，nginx，tomcat等）在宿主机上，可以通过容器运行镜像的实例。
+## 开发简化环境的搭建
+在docker里，拉取到宿主机的java项目，不需要考虑jdk的版本，不需要任何可以依赖运行的程序，直接在宿主机运行。像虚拟机一样，即开即用。
+## docker和虚拟机相比的好处
+1，占用资源
+如果我们想要开启一个虚拟机，就要考虑分配操作系统的镜像，分配内存和cpu资源。而docker只是操作系统是上的一个进程，可以开很多个，节省了更多的资源。
+# docker生命周期管理
+docker run ：创建一个新的容器并运行一个命令   
+`docker run [OPTIONS] IMAGE [COMMAND] [ARG...]`   
+docker start :启动一个或多个已经被停止的容器   
+`docker start [OPTIONS] CONTAINER [CONTAINER...]`   
+docker stop :停止一个运行中的容器   
+`docker stop [OPTIONS] CONTAINER [CONTAINER...]`   
+docker restart :重启容器   
+`docker restart [OPTIONS] CONTAINER [CONTAINER...]`
+docker kill :杀掉一个运行中的容器  
+`docker kill [OPTIONS] CONTAINER [CONTAINER...]`   
+docker rm ：删除一个或多个容器。   
+`docker rm [OPTIONS] CONTAINER [CONTAINER...]`   
+docker exec ：在运行的容器中执行命令   
+`docker exec [OPTIONS] CONTAINER COMMAND [ARG...]  `
+
+# docker镜像管理
 ## 查看镜像
 `docker images`   
 `docker images -q  查看所用镜像的id`
@@ -10,7 +35,7 @@
 
 `docker pull 镜像名称`  
 ## 删除镜像
-`docker rmi 镜像id # 删除指定本地镜像`        
+`docker rmi 镜像id  删除指定本地镜像`        
 `docker rmi "docker images -q"  删除所有本地镜像`
 
 # docker容器
@@ -39,14 +64,33 @@
 # docker数据卷
 ## 数据卷概念
 容器启动后的数据销毁数据也会跟随销毁，防止数据丢失可以使用数据卷保存数据，容器(目录)=宿主机(目录),宿主机和容器之间的数据是双向绑定的。   
-`问：`   
-为什么数据卷基于容器内部创建，容器销毁数据卷不受影响？    
-因为双向绑定数据，在宿主机里有一份同样的数据，新建容器时数据会自动到新建容器里。
+
+卷就是目录或文件，存在于一个或多个容器中，由Docker挂载到容器，但卷不属于联合文件系统（Union FileSystem），因此能够绕过联合文件系统提供一些用于持续存储或共享数据的特性。
+## 数据卷使用
+运行容器，指定挂载数据卷命令：      
+`docker run -it -v 主机目录:容器目录`     
+
+
+在Linux下的MySQL默认的数据文档存储目录为/var/lib/mysql，默认的配置文件的位置/etc/mysql/conf.d，为了确保MySQL镜像或容器删除后，造成的数据丢失，下面建立数据卷保存MySQL的数据和文件。   
+```
+docker run -d -p 6603:3306 -v /home/mysql/conf:/etc/mysql/conf.d -v /home/mysql/data:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=123456 --name mysql01 mysql:5.7
+```
+
 # docker网络
-由于内容较长，单独一章讲解
-# docker仓库
-在我们刚使用docker，如果想要看到点什么东西的时候，就会涉及到web服务器，例：nginx/tomcat。就需要去dockerhub上拉取下来镜像。  
-我们在开发时，可以制作自己的docker镜像上传到dockerhub上，提供给他人访问。
+## 默认网络
+安装 Docker 以后，会默认创建四种网络，可以通过 docker network ls 查看。  
+`bridge:  `  
+为每个容器分配，设置ip地址，并将容器连接到一个docker0虚拟网桥，默认为该模式。我们新建的容器，如果不另外指定网络，就不需要考虑网络问题，默认在一个网络下可以进行通信。  
+`host:`  
+容器不会虚拟自己的网卡，以及配置ip，而是使用宿主机的。这样的好处是，在容器内因为共享了宿主机的ip地址，如果宿主机是一个共有ip，那么容器同样可以通过这个共有ip和外部进行通信。  
+`none：`   
+none 网络模式即不为 Docker Container 创建任何的网络环境，容器内部就只能使用 loopback 网络设备，不会再有其他的网络资源  
+`container:`  
+新创建的容器不会创建自己的网卡，配置自己的ip，而是和一个指定的容器共享。
+
+
+# docker镜像仓库
+我们在开发时，可以制作自己的docker镜像上传到dockerhub上，提供给他人访问,也可以在dockerhun仓库里拉取别人的镜像。
 
 ## 制作镜像
 一、
@@ -86,7 +130,6 @@ CMD [“java”,"-jar","/文件名.jar"]
 
 8.启动镜像
 `docker run 镜像名称`
-<!-- ![节点](./1.PNG) -->
 
 ## 镜像推送
 注意：在推送镜像之前需要先登录    
